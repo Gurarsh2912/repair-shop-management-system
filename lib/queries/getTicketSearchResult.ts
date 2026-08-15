@@ -28,3 +28,5 @@ export async function getTicketSearchResults(searchText: string) {
 
     return results
 }
+
+export type TicketSearchResultsType = Awaited<ReturnType<typeof getTicketSearchResults>>
