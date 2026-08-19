@@ -21,9 +21,9 @@ import {
 } from "@/components/ui/table"
 
 import { CircleCheckIcon, CircleXIcon } from "lucide-react"
-
-import { useRouter } from "next/navigation"
-import { numeric } from "drizzle-orm/pg-core"
+import { useMemo } from "react"
+import { useRouter , useSearchParams} from "next/navigation"
+import { usePolling } from "@/hooks/usePolling"
 import { Button } from "@/components/ui/button"
 
 type Props = {
@@ -35,6 +35,15 @@ type RowType = TicketSearchResultsType[0]
 
 export default function TicketTable({data}: Props){
     const router = useRouter()
+
+    const searchParams = useSearchParams(); 
+
+    usePolling(searchParams.get("searchText"), 300000)
+
+    const pageIndex = useMemo(()=>{
+        const page = searchParams.get("page")
+        return page ? parseInt(page)-1 : 0
+    }, [searchParams.get("page")])
 
     const columnHeadersArray: Array<keyof RowType> = [
         "ticketDate",
@@ -81,9 +90,10 @@ export default function TicketTable({data}: Props){
     const table = useReactTable({
         data,
         columns,
-        initialState: {
+        state: {
             pagination:{
-                pageSize: 10.
+                pageIndex,
+                pageSize: 10,
             },
         },
         getCoreRowModel: getCoreRowModel(),
@@ -130,7 +140,7 @@ export default function TicketTable({data}: Props){
             </Table>
         </div>
 
-        <div className="flex justify-between itmes-center">
+        <div className="flex justify-between itmes-center gap">
             <div className="flex basis-1/3 items-center">
                 <p className="whitespace-nowrap font-bold" >
                     {`Page ${table.getState().pagination.pageIndex + 1} of ${table.getPageCount()}`}
@@ -139,15 +149,35 @@ export default function TicketTable({data}: Props){
                 </p>
             </div>
             <div className="space-x-1 mt-2">
-                <Button variant={"outline"} onClick={()=> table.previousPage()} 
+                <Button variant={"outline"} onClick={()=> {
+                    const newIndex = table.getState().pagination.pageIndex - 1;
+                    table.setPageIndex(newIndex)
+                    const params = new URLSearchParams(searchParams.toString())
+                    params.set("page", (newIndex+1).toString())
+                    router.replace(`?${params.toString()}`, {scroll:false})
+                }} 
                 disabled={!table.getCanPreviousPage()}
                 >
                     Previous
                 </Button>
 
-                <Button variant={"outline"} onClick={()=> table.nextPage()} 
-                disabled={!table.getCanNextPage()}
-                >
+                <Button
+                    variant="outline"
+                    onClick={() => {
+                        const newIndex = table.getState().pagination.pageIndex + 1;
+
+                        table.setPageIndex(newIndex);
+
+                        const params = new URLSearchParams(searchParams.toString());
+
+                        params.set("page", (newIndex + 1).toString());
+
+                        router.replace(`?${params.toString()}`, {
+                        scroll: false,
+                        });
+                    }}
+                    disabled={!table.getCanNextPage()}
+                    >
                     Next
                 </Button>
             </div>

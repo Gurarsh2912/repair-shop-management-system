@@ -73,8 +73,12 @@ async function submitForm(data:insertTicketSchemaType){
             <DisplayServerActionResponse result={saveResult}></DisplayServerActionResponse>
             <div>
                 <h2 className="text-2xl font-bold">
-                    { ticket?.id ?? isEditable ?
-                     `Edit Ticket #${ticket?.id}` : ticket?.id  ?  `View Ticket #${ticket?.id} ` : "New Ticket Form" } 
+                    {ticket?.id
+                        ? isEditable
+                            ? `Edit Ticket #${ticket.id}`
+                            : `View Ticket #${ticket.id}`
+                        : "New Ticket Form"
+                    }
                 </h2>
             </div>
             <Form {...form}>
